@@ -100,14 +100,19 @@ class Binance:
                 print('[%s] Open: %s High: %s Low: %s Close: %s' % (datetime.fromtimestamp(kline[0]/1000), kline[1], kline[2], kline[3], kline[4]))
 
         return
-    def past_24_hours(self):
-        
+
+
+    def past_24_hours(self, logger, mailer):
         array_data = []
         dict_data = {}
         response = self.client.get_past_24_hours()
-        print("response:{}".format(response))
+        response_string = "{}".format(response)
+        error_msg = "Way too much request weight used"
+        if error_msg in response_string:
+            logger.warning(error_msg)
+            mailer.send_email(error_msg)
+            return None
         for coin in response:
-            print("Pint coin:{}".format(coin))
             symbol = coin['symbol']
             # price = Decimal(coin['lastPrice'])
             price = Decimal(coin['bidPrice'])
@@ -158,6 +163,8 @@ class Binance:
             email_msg = ""
             for symbol in past24Hours.keys():
                 currentPrice = past24Hours[symbol]
+                if currentPrice is None:
+                    raise Exception("throtting triggered.")
                 if symbol in history_data[len(history_data) - businessInMin].keys():
                     oldPrice = history_data[len(history_data) - businessInMin][symbol]
                     if oldPrice != 0:
@@ -214,7 +221,7 @@ try:
         try:
             logger.info("\nRound: {}, -----------------".format(round))
             round += 1
-            past24Hours = m.past_24_hours()
+            past24Hours = m.past_24_hours(logger, mailer)
             history_data.append(past24Hours)
             email_msg = ""
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business1Min, past24Hours, history_data, mailer))
@@ -229,6 +236,8 @@ try:
         except Exception as e:
             logger.info('Exception in round {}: {}'.format(round, e))
             traceback.print_exc()
+            history_data.append(history_data[-1]) # use data in last min
+            m.sleepInSeconds(logger, delayInSeconds)
 
 
 except Exception as e:
