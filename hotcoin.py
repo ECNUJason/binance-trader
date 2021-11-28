@@ -14,6 +14,8 @@ import json
 import pandas as pd
 import numpy as np
 from decimal import Decimal
+import random
+import math
 import logging
 import os.path
 import os,sys
@@ -159,15 +161,17 @@ class Binance:
     def handle_business(self, businessInMin, past24Hours, history_data, mailer):
         if len(history_data) <= businessInMin:
             return None
+        if past24Hours is None:
+            return None
         else:
             email_msg = ""
             for symbol in past24Hours.keys():
                 currentPrice = past24Hours[symbol]
-                if symbol in history_data[len(history_data) - businessInMin].keys():
-                    oldPrice = history_data[len(history_data) - businessInMin][symbol]
+                if symbol in history_data[len(history_data) - businessInMin - 1].keys():
+                    oldPrice = history_data[len(history_data) - businessInMin - 1][symbol]
                     if oldPrice != 0:
-                        ratio = (currentPrice - oldPrice)/oldPrice
-                        ratio = round(ratio, 5)
+                        ratio = ((currentPrice - oldPrice)/oldPrice) + Decimal(random.random()/100) # To avoid ratio become 0
+                        ratio = float(ratio)
                         if ratio > 0.1999:
                             msg = "=====================> Symbol: {}, {} mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
                             email_msg = "{}\n{}".format(email_msg, msg)
