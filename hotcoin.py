@@ -153,6 +153,7 @@ class Binance:
         logger.addHandler(fh)
 
         ch = logging.StreamHandler()
+        ch.setFormatter(formatter)
         ch.setLevel(logging.INFO)  # 输出到console的log等级的开关
         logger.addHandler(ch)
         return logger
@@ -170,7 +171,7 @@ class Binance:
                 if symbol in history_data[len(history_data) - businessInMin - 1].keys():
                     oldPrice = history_data[len(history_data) - businessInMin - 1][symbol]
                     if oldPrice != 0:
-                        ratio = ((currentPrice - oldPrice)/oldPrice) + Decimal(random.random()/100) # To avoid ratio become 0
+                        ratio = ((currentPrice - oldPrice)/oldPrice) + Decimal(random.random()/1000) # To avoid ratio become 0
                         ratio = float(ratio)
                         if ratio > 0.1999:
                             msg = "=====================> Symbol: {}, {} mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
@@ -231,6 +232,7 @@ try:
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business10Min, past24Hours, history_data, mailer))
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business25Min, past24Hours, history_data, mailer))
             if len(email_msg) > 0:
+                email_msg = "Time:{} \n {}".format(datetime.now().strftime("%Y%m%d_%H%M%S"), email_msg)
                 mailer.send_email(email_msg)
             if len(history_data) > 100:
                 history_data = history_data[1:]
