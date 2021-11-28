@@ -108,6 +108,8 @@ class Binance:
             if symbol.endswith("USDT"):
                 array_data.append([symbol, price])
                 dict_data[symbol] = price
+            if symbol == 'COCOSUSDT':
+                print("check price:{}".format(coin))
         np_array = np.array(array_data)
         np_array = np_array[np_array[:, 1].argsort()]
         file_name = "past_24_hours_{}".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
@@ -158,7 +160,6 @@ try:
             logger.info("\nRound: {}, -----------------".format(round))
             round += 1
             past24Hours = m.past_24_hours()
-            logger.info("data: past24Hours:{}".format(past24Hours['COCOSUSDT']))
             history_data.append(past24Hours)
             if len(history_data) > firstLevelBusiness:
                 for symbol in past24Hours.keys():
