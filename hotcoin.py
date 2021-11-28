@@ -13,6 +13,7 @@ from BinanceAPI import BinanceAPI
 import json
 import pandas as pd
 import numpy as np
+from decimal import Decimal
 
 class Binance:
 
@@ -96,13 +97,15 @@ class Binance:
         return
     def past_24_hours(self):
         
-        data = []
+        array_data = []
+        dict_data = {}
         for coin in self.client.get_past_24_hours():
             symbol = coin['symbol']
-            price = coin['lastPrice']
+            price = Decimal(coin['lastPrice'])
             if symbol.endswith("USDT"):
-                data.append([symbol, float(price)])
-        np_array = np.array(data)
+                array_data.append([symbol, price])
+                dict_data[symbol] = price
+        np_array = np.array(array_data)
         np_array = np_array[np_array[:, 1].argsort()]
         file_name = "past_24_hours_{}".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
         csv_file_name = "{}.csv".format(file_name)
@@ -110,87 +113,42 @@ class Binance:
         with open(csv_file_path, 'wb') as csv_file:
             np.savetxt(csv_file, np_array, delimiter=",", fmt='%s', header='symbol,price')
         print("Write 24 hours data to csv file:{}".format(csv_file_path))
+        return dict_data
 try:
-
+    # List of dictionaries.
+    # delayInSeconds = 30 # for debug, set to 10, prod as 60
+    delayInSeconds = 60 # normal
+    # testInMin = 3 # for debug, set to 1, normal set as 25
+    testInMin = 25 # normal
+    history_data = []
+    m = Binance()
+    round = 1
     while True:
-        m = Binance()
-
-        print('\n')
-        print('1 >> Print orders')
-        print('2 >> Scan profits')
-        print('3 >> List balances')
-        print('4 >> Check balance')
-        print('-----------------------------')
-        print('5 >> Market value (specific)')
-        print('6 >> Market value (range)')
-        print('-----------------------------')
-        print('7 >> Server status')
-        print('-----------------------------')
-        print('8 >> List 24 hour status')
-        print('-----------------------------')
-        print('0 >> Exit')
-        print('\nEnter option number:')
-
-        option = input()
-
-        print('\n')
-
-        if option=='1':
-            print('Enter pair: (i.e. XVGBTC)')
-            symbol = input()
-            print('%s Orders' % (symbol))
-            
-            m.orders(symbol, 10)
-
-        elif option=='2':      
-            print('Enter asset (i.e. BTC, ETH, BNB)')
-            asset = input()            
-            print('Profits scanning...')
-            
-            m.profits(asset)
-            
-        elif option=='3':      
-            m.balances()
-            
-        elif option=='4':
-            print('Enter asset: (i.e. BTC)')
-            symbol = input()
-            print('%s balance' % (symbol))
-            
-            m.balance(symbol)
-
-        elif option=='5':
-            print('Enter pair: (i.e. BTCUSDT)')
-            symbol = input()
-            print('Enter date/time: (dd/mm/yyyy hh:mm:ss)')
-            dateS = input()
-
-            klines=m.market_value(symbol,"1m", dateS)
-
-        elif option=='6':
-            print('Enter pair: (i.e. BTCUSDT)')
-            symbol = input()
-            print('Enter start date/time: (dd/mm/yyyy hh:mm:ss)')
-            dateS = input()
-            print('Enter end date/time: (dd/mm/yyyy hh:mm:ss)')
-            dateF = input()
-            print('Enter interval as in exchange (i.e. 5m, 1d):')
-            interval = input()
-
-            klines=m.market_value(symbol, interval, dateS, dateF)
-
-        elif option=='7':
-            lag=m.server_status()
-
-        elif option=='8':
+        try:
+            print("\n\nRound: {}, ----------------- \n\n".format(round))
+            round += 1
             past24Hours = m.past_24_hours()
-
-        elif option=='0':
-            break
-        
-        else:
-            print('Option not reconigzed')
-
+            history_data.append(past24Hours)
+            if len(history_data) > testInMin:
+                for symbol in past24Hours.keys():
+                    currentPrice = past24Hours[symbol]
+                    oldPrice = history_data[len(history_data) - testInMin][symbol]
+                    if oldPrice != 0:
+                        if (currentPrice - oldPrice)/oldPrice > 0.1999:
+                            print("Symbol: {}, 30 mins, +20%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
+                        elif (currentPrice - oldPrice)/oldPrice > 0.1499:
+                            print("Symbol: {}, 30 mins, +15%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
+                        elif (currentPrice - oldPrice)/oldPrice > 0.0999:
+                            print("Symbol: {}, 30 mins, +10%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
+                        # elif (currentPrice - oldPrice)/oldPrice > 0.00001: # For debug
+                        #     print("Symbol: {}, 30 mins, +1%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
+            if len(history_data) > 40:
+                history_data = history_data[1:]
+            print("start sleep 60 seconds")
+            time.sleep(delayInSeconds)
+            print("finished sleep 60 seconds")
+        except Exception as e:
+            print('Exception in round {}: {}'.format(round, e))
 
 except Exception as e:
     print('Exception: %s' % e)

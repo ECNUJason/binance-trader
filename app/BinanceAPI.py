@@ -104,6 +104,10 @@ class BinanceAPI:
         params = {"symbol": market, "orderId": order_id}
         return self._delete(path, params)
 
+    def get_past_24_hours(self):
+        path = "{}/ticker/24hr".format(self.BASE_URL_V3)
+        return self._get_without_param(path)
+
     def _get_no_sign(self, path, params={}):
         query = urlencode(params)
         url = "%s?%s" % (path, query)
@@ -125,6 +129,14 @@ class BinanceAPI:
         params.update({"recvWindow": config.recv_window})
         query = urlencode(self._sign(params))
         url = "%s?%s" % (path, query)
+        print("url:{}".format(url))
+        header = {"X-MBX-APIKEY": self.key}
+        return requests.get(url, headers=header, \
+            timeout=30, verify=True).json()
+
+    def _get_without_param(self, path):
+        url = path
+        print("Request: url:{}.".format(url))
         header = {"X-MBX-APIKEY": self.key}
         return requests.get(url, headers=header, \
             timeout=30, verify=True).json()
