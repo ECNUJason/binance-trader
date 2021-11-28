@@ -191,7 +191,7 @@ class Binance:
     def concat_email_msg(self, currentMsg, appendMsg):
         ret = currentMsg
         if appendMsg is not None:
-            ret = "{}\nBusiness:{}".format(currentMsg, appendMsg)
+            ret = "{}\n-------\nBusiness:{}".format(currentMsg, appendMsg)
         return ret
 
 
@@ -217,7 +217,8 @@ try:
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business5Min, past24Hours, history_data, mailer))
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business10Min, past24Hours, history_data, mailer))
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business25Min, past24Hours, history_data, mailer))
-            mailer.send_email(email_msg)
+            if len(email_msg) > 0:
+                mailer.send_email(email_msg)
             if len(history_data) > 100:
                 history_data = history_data[1:]
             m.sleepInSeconds(logger, delayInSeconds)
