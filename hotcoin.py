@@ -162,10 +162,14 @@ class Binance:
                         elif ratio > 0.0999:
                             logger.info("=====================> Symbol: {}, {} mins, +10%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice))                                
 
+
+    def sleepInSeconds(self, logger, delayInSeconds):
+        logger.info("sleep for {} seconds".format(delayInSeconds))
+        time.sleep(delayInSeconds)
+
+
 try:
-    # List of dictionaries.
-    # delayInSeconds = 30 # for debug, set to 10, prod as 60
-    delayInSeconds = 60 # normal
+    delayInSeconds = 60
     business5Min = 5
     business10Min = 10
     business25Min = 25
@@ -179,16 +183,12 @@ try:
             round += 1
             past24Hours = m.past_24_hours()
             history_data.append(past24Hours)
-            if len(history_data) > business5Min:
-                m.handle_business(business5Min, past24Hours, history_data)
-            if len(history_data) > business10Min:
-                m.handle_business(business10Min, past24Hours, history_data)
-            if len(history_data) > business25Min:
-                m.handle_business(business25Min, past24Hours, history_data)
+            m.handle_business(business5Min, past24Hours, history_data)
+            m.handle_business(business10Min, past24Hours, history_data)
+            m.handle_business(business25Min, past24Hours, history_data)
             if len(history_data) > 100:
                 history_data = history_data[1:]
-            logger.info("sleep for 60 seconds")
-            time.sleep(delayInSeconds)
+            m.sleepInSeconds(logger, delayInSeconds)
         except Exception as e:
             logger.info('Exception in round {}: {}'.format(round, e))
 
