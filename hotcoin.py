@@ -111,7 +111,7 @@ class Binance:
         if error_msg in response_string:
             logger.warning(error_msg)
             mailer.send_email(error_msg)
-            return None
+            raise Exception("throtting triggered.")
         for coin in response:
             symbol = coin['symbol']
             # price = Decimal(coin['lastPrice'])
@@ -163,8 +163,6 @@ class Binance:
             email_msg = ""
             for symbol in past24Hours.keys():
                 currentPrice = past24Hours[symbol]
-                if currentPrice is None:
-                    raise Exception("throtting triggered.")
                 if symbol in history_data[len(history_data) - businessInMin].keys():
                     oldPrice = history_data[len(history_data) - businessInMin][symbol]
                     if oldPrice != 0:
