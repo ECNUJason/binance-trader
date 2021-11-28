@@ -149,7 +149,7 @@ class Binance:
 
     def handle_business(self, businessInMin, past24Hours, history_data, mailer):
         if len(history_data) <= businessInMin:
-            pass
+            return None
         else:
             email_msg = ""
             for symbol in past24Hours.keys():
@@ -158,6 +158,7 @@ class Binance:
                     oldPrice = history_data[len(history_data) - businessInMin][symbol]
                     if oldPrice != 0:
                         ratio = (currentPrice - oldPrice)/oldPrice
+                        ratio = round(ratio, 5)
                         if ratio > 0.1999:
                             msg = "=====================> Symbol: {}, {} mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
                             email_msg = "{}\n{}".format(email_msg, msg)
@@ -170,17 +171,33 @@ class Binance:
                             msg = "=====================> Symbol: {}, {} mins, +10%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
                             email_msg = "{}\n{}".format(email_msg, msg)
                             logger.info(msg)
+
+                        if businessInMin <= 3:
+                            if ratio >= 0.0399:
+                                msg = "=====================> Symbol: {}, {} mins, +4%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
+                            email_msg = "{}\n{}".format(email_msg, msg)
+                            logger.info(msg)
             if len(email_msg) > 0:
-                mailer.send_email(email_msg)
+                return email_msg
+            else:
+                return None
 
 
     def sleepInSeconds(self, logger, delayInSeconds):
         logger.info("sleep for {} seconds".format(delayInSeconds))
         time.sleep(delayInSeconds)
+    
+
+    def concat_email_msg(self, currentMsg, appendMsg):
+        ret = currentMsg
+        if appendMsg is not None:
+            ret = "{}\nBusiness:{}".format(currentMsg, appendMsg)
+        return ret
 
 
 try:
     delayInSeconds = 60
+    business1Min = 1
     business5Min = 5
     business10Min = 10
     business25Min = 25
@@ -195,9 +212,12 @@ try:
             round += 1
             past24Hours = m.past_24_hours()
             history_data.append(past24Hours)
-            m.handle_business(business5Min, past24Hours, history_data, mailer)
-            m.handle_business(business10Min, past24Hours, history_data, mailer)
-            m.handle_business(business25Min, past24Hours, history_data, mailer)
+            email_msg = ""
+            email_msg = m.concat_email_msg(email_msg, m.handle_business(business1Min, past24Hours, history_data, mailer))
+            email_msg = m.concat_email_msg(email_msg, m.handle_business(business5Min, past24Hours, history_data, mailer))
+            email_msg = m.concat_email_msg(email_msg, m.handle_business(business10Min, past24Hours, history_data, mailer))
+            email_msg = m.concat_email_msg(email_msg, m.handle_business(business25Min, past24Hours, history_data, mailer))
+            mailer.send_email(email_msg)
             if len(history_data) > 100:
                 history_data = history_data[1:]
             m.sleepInSeconds(logger, delayInSeconds)
