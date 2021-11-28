@@ -105,6 +105,7 @@ class Binance:
         array_data = []
         dict_data = {}
         for coin in self.client.get_past_24_hours():
+            print("Pint coin:{}".format(coin))
             symbol = coin['symbol']
             # price = Decimal(coin['lastPrice'])
             price = Decimal(coin['bidPrice'])
