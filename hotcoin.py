@@ -104,12 +104,13 @@ class Binance:
         dict_data = {}
         for coin in self.client.get_past_24_hours():
             symbol = coin['symbol']
-            price = Decimal(coin['lastPrice'])
+            # price = Decimal(coin['lastPrice'])
+            price = Decimal(coin['bidPrice'])
             if symbol.endswith("USDT"):
                 array_data.append([symbol, price])
                 dict_data[symbol] = price
-            if symbol == 'COCOSUSDT':
-                print("check price:{}".format(coin))
+            # if symbol == 'COCOSUSDT':
+            #     print("check price:{}".format(coin))
         np_array = np.array(array_data)
         np_array = np_array[np_array[:, 1].argsort()]
         file_name = "past_24_hours_{}".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
