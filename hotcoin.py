@@ -14,6 +14,9 @@ import json
 import pandas as pd
 import numpy as np
 from decimal import Decimal
+import logging
+import os.path
+import os,sys
 
 class Binance:
 
@@ -112,8 +115,33 @@ class Binance:
         csv_file_path = "data/{}".format(csv_file_name)
         with open(csv_file_path, 'wb') as csv_file:
             np.savetxt(csv_file, np_array, delimiter=",", fmt='%s', header='symbol,price')
-        print("Write 24 hours data to csv file:{}".format(csv_file_path))
+        logger.info("Write 24 hours data to csv file:{}".format(csv_file_path))
         return dict_data
+    
+    def prepare_logger(self):
+        # 第一步，创建一个logger
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)  # Log等级总开关
+        # 第二步，创建一个handler，用于写入日志文件
+        rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
+        log_path = os.path.join(os.getcwd(), 'logs')
+        if not os.path.exists(log_path):
+            os.mkdir(log_path)
+        log_name = os.path.join(log_path, rq + '.log')
+        logfile = log_name
+        fh = logging.FileHandler(logfile, mode='w')
+        fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
+        # 第三步，定义handler的输出格式
+        formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+        fh.setFormatter(formatter)
+        # 第四步，将logger添加到handler里面
+        logger.addHandler(fh)
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)  # 输出到console的log等级的开关
+        logger.addHandler(ch)
+        return logger
+
 try:
     # List of dictionaries.
     # delayInSeconds = 30 # for debug, set to 10, prod as 60
@@ -123,9 +151,10 @@ try:
     history_data = []
     m = Binance()
     round = 1
+    logger = m.prepare_logger()
     while True:
         try:
-            print("\n\nRound: {}, ----------------- \n\n".format(round))
+            logger.info("Round: {}, -----------------".format(round))
             round += 1
             past24Hours = m.past_24_hours()
             history_data.append(past24Hours)
@@ -135,20 +164,20 @@ try:
                     oldPrice = history_data[len(history_data) - testInMin][symbol]
                     if oldPrice != 0:
                         if (currentPrice - oldPrice)/oldPrice > 0.1999:
-                            print("Symbol: {}, 30 mins, +20%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
+                            logger.info("Symbol: {}, 30 mins, +20%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
                         elif (currentPrice - oldPrice)/oldPrice > 0.1499:
-                            print("Symbol: {}, 30 mins, +15%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
+                            logger.info("Symbol: {}, 30 mins, +15%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
                         elif (currentPrice - oldPrice)/oldPrice > 0.0999:
-                            print("Symbol: {}, 30 mins, +10%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
+                            logger.info("Symbol: {}, 30 mins, +10%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
                         # elif (currentPrice - oldPrice)/oldPrice > 0.00001: # For debug
-                        #     print("Symbol: {}, 30 mins, +1%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
+                        #     logger.info("Symbol: {}, 30 mins, +1%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
             if len(history_data) > 40:
                 history_data = history_data[1:]
-            print("start sleep 60 seconds")
+            logger.info("start sleep 60 seconds")
             time.sleep(delayInSeconds)
-            print("finished sleep 60 seconds")
+            logger.info("finished sleep 60 seconds")
         except Exception as e:
-            print('Exception in round {}: {}'.format(round, e))
+            logger.info('Exception in round {}: {}'.format(round, e))
 
 except Exception as e:
-    print('Exception: %s' % e)
+    logger.info('Exception: %s' % e)

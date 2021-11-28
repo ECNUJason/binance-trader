@@ -1,11 +1,13 @@
 
 # @yasinkuyu
 
-/app/config.py
+# /app/config.py
 /db/orders.db
 /binance-trader.log
 /data/*
 !/data/Sample.csv
+/logs/*
+!/logs/sample
 **/env
 *.pyc
 .pyc
