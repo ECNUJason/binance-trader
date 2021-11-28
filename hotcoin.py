@@ -175,8 +175,8 @@ class Binance:
                         if businessInMin <= 3:
                             if ratio >= 0.0399:
                                 msg = "=====================> Symbol: {}, {} mins, +4%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
-                            email_msg = "{}\n{}".format(email_msg, msg)
-                            logger.info(msg)
+                                email_msg = "{}\n{}".format(email_msg, msg)
+                                logger.info(msg)
             if len(email_msg) > 0:
                 return email_msg
             else:
