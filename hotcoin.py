@@ -155,7 +155,7 @@ try:
     logger = m.prepare_logger()
     while True:
         try:
-            logger.info("Round: {}, -----------------".format(round))
+            logger.info("\nRound: {}, -----------------".format(round))
             round += 1
             past24Hours = m.past_24_hours()
             history_data.append(past24Hours)
