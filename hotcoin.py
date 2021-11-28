@@ -146,8 +146,9 @@ try:
     # List of dictionaries.
     # delayInSeconds = 30 # for debug, set to 10, prod as 60
     delayInSeconds = 60 # normal
-    # testInMin = 3 # for debug, set to 1, normal set as 25
-    testInMin = 25 # normal
+    firstLevelBusiness = 10 # 10分钟暴涨的币
+    # secondLevelBusiness = 3 # for debug, set to 1, normal set as 25
+    secondLevelBusiness = 25 # normal
     history_data = []
     m = Binance()
     round = 1
@@ -158,20 +159,34 @@ try:
             round += 1
             past24Hours = m.past_24_hours()
             history_data.append(past24Hours)
-            if len(history_data) > testInMin:
+            if len(history_data) > firstLevelBusiness:
                 for symbol in past24Hours.keys():
                     currentPrice = past24Hours[symbol]
-                    oldPrice = history_data[len(history_data) - testInMin][symbol]
-                    if oldPrice != 0:
-                        if (currentPrice - oldPrice)/oldPrice > 0.1999:
-                            logger.info("Symbol: {}, 30 mins, +20%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
-                        elif (currentPrice - oldPrice)/oldPrice > 0.1499:
-                            logger.info("Symbol: {}, 30 mins, +15%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
-                        elif (currentPrice - oldPrice)/oldPrice > 0.0999:
-                            logger.info("Symbol: {}, 30 mins, +10%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
-                        # elif (currentPrice - oldPrice)/oldPrice > 0.00001: # For debug
-                        #     logger.info("Symbol: {}, 30 mins, +1%, currentPrice:{}, oldPrice:{}".format(symbol, currentPrice, oldPrice))
-            if len(history_data) > 40:
+                    if symbol in history_data[len(history_data) - firstLevelBusiness].keys():
+                        oldPrice = history_data[len(history_data) - firstLevelBusiness][symbol]
+                        if oldPrice != 0:
+                            ratio = (currentPrice - oldPrice)/oldPrice
+                            if ratio > 0.1999:
+                                logger.info("Symbol: {}, 10 mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, ratio, currentPrice, oldPrice))
+                            elif ratio > 0.1499:
+                                logger.info("Symbol: {}, 10 mins, +15%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, ratio, currentPrice, oldPrice))
+                            elif ratio > 0.0999:
+                                logger.info("Symbol: {}, 10 mins, +10%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, ratio, currentPrice, oldPrice))
+
+            if len(history_data) > secondLevelBusiness:
+                for symbol in past24Hours.keys():
+                    currentPrice = past24Hours[symbol]
+                    if symbol in history_data[len(history_data) - secondLevelBusiness].keys():
+                        oldPrice = history_data[len(history_data) - secondLevelBusiness][symbol]
+                        if oldPrice != 0:
+                            ratio = (currentPrice - oldPrice)/oldPrice
+                            if ratio > 0.1999:
+                                logger.info("Symbol: {}, 30 mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, ratio, currentPrice, oldPrice))
+                            elif ratio > 0.1499:
+                                logger.info("Symbol: {}, 30 mins, +15%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, ratio, currentPrice, oldPrice))
+                            elif ratio > 0.0999:
+                                logger.info("Symbol: {}, 30 mins, +10%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, ratio, currentPrice, oldPrice))
+            if len(history_data) > 100:
                 history_data = history_data[1:]
             logger.info("start sleep 60 seconds")
             time.sleep(delayInSeconds)
