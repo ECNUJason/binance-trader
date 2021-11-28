@@ -10,7 +10,7 @@ class Mailer:
     def __init__(self):
         pass
     
-    def send_email(self, message):
+    def send_email(self, message, subject = "Trader Business"):
         #sender是邮件发送人邮箱，passWord是服务器授权码，mail_host是服务器地址（这里是QQsmtp服务器）
         sender = 'fake@qq.com'#
         passWord = 'fake'
@@ -21,7 +21,7 @@ class Mailer:
         #设置email信息
         msg = MIMEMultipart()
         #邮件主题
-        msg['Subject'] = "Trader Business"
+        msg['Subject'] = subject
         #发送方信息
         msg['From'] = sender
         #邮件正文是MIMEText:

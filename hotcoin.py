@@ -6,20 +6,17 @@ import sys
 
 sys.path.insert(0, './app')
 
+import os.path
+import os
 import time
 import config
-from datetime import timedelta, datetime
-from BinanceAPI import BinanceAPI
-import json
-import pandas as pd
+from datetime import datetime
 import numpy as np
 from decimal import Decimal
-import random
-import math
 import logging
-import os.path
-import os,sys
+
 from Mailer import Mailer
+from BinanceAPI import BinanceAPI
 import traceback
 
 class Binance:
@@ -171,7 +168,7 @@ class Binance:
                 if symbol in history_data[len(history_data) - businessInMin - 1].keys():
                     oldPrice = history_data[len(history_data) - businessInMin - 1][symbol]
                     if oldPrice != 0:
-                        ratio = ((currentPrice - oldPrice)/oldPrice) + Decimal(random.random()/1000) # To avoid ratio become 0
+                        ratio = ((currentPrice - oldPrice)/oldPrice) # To avoid ratio become 0
                         ratio = float(ratio)
                         if ratio > 0.1999:
                             msg = "=====================> Symbol: {}, {} mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
@@ -208,6 +205,26 @@ class Binance:
             ret = "{}\n-------\nBusiness:{}".format(currentMsg, appendMsg)
         return ret
 
+    
+
+    def getSystemInfo(self, logger):
+        import platform,socket,re,uuid,json,psutil
+        try:
+            info={}
+            info['platform']=platform.system()
+            info['platform-release']=platform.release()
+            info['platform-version']=platform.version()
+            info['architecture']=platform.machine()
+            info['hostname']=socket.gethostname()
+            info['ip-address']=socket.gethostbyname(socket.gethostname())
+            info['mac-address']=':'.join(re.findall('..', '%012x' % uuid.getnode()))
+            info['processor']=platform.processor()
+            info['ram']=str(float(psutil.virtual_memory().total / (1024.0 **3)))+" GB"
+            return json.dumps(info)
+        except Exception as e:
+            logger.exception(e)
+            raise e
+
 
 try:
     delayInSeconds = 60
@@ -242,6 +259,8 @@ try:
             traceback.print_exc()
             history_data.append(history_data[-1]) # use data in last min
             m.sleepInSeconds(logger, delayInSeconds)
+        if (round+1)%60 == 0:
+            mailer.send_email("hourly heart beat from machone:\n{}".format(m.getSystemInfo(logger)), "Liveness Pulse")
 
 
 except Exception as e:
