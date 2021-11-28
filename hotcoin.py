@@ -158,6 +158,7 @@ try:
             logger.info("\nRound: {}, -----------------".format(round))
             round += 1
             past24Hours = m.past_24_hours()
+            logger.info("data: past24Hours:{}".format(past24Hours['COCOSUSDT']))
             history_data.append(past24Hours)
             if len(history_data) > firstLevelBusiness:
                 for symbol in past24Hours.keys():
