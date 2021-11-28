@@ -145,11 +145,13 @@ class Binance:
         ch.setLevel(logging.INFO)  # 输出到console的log等级的开关
         logger.addHandler(ch)
         return logger
-    
-    def handle_business(self, businessInMin, past24Hours, history_data):
+
+
+    def handle_business(self, businessInMin, past24Hours, history_data, mailer):
         if len(history_data) <= businessInMin:
             pass
         else:
+            email_msg = ""
             for symbol in past24Hours.keys():
                 currentPrice = past24Hours[symbol]
                 if symbol in history_data[len(history_data) - businessInMin].keys():
@@ -157,11 +159,19 @@ class Binance:
                     if oldPrice != 0:
                         ratio = (currentPrice - oldPrice)/oldPrice
                         if ratio > 0.1999:
-                            logger.info("=====================> Symbol: {}, {} mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice))
+                            msg = "=====================> Symbol: {}, {} mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
+                            email_msg = "{}\n{}".format(email_msg, msg)
+                            logger.info(msg)
                         elif ratio > 0.1499:
-                            logger.info("=====================> Symbol: {}, {} mins, +15%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice))
+                            msg = "=====================> Symbol: {}, {} mins, +15%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
+                            email_msg = "{}\n{}".format(email_msg, msg)
+                            logger.info(msg)
                         elif ratio > 0.0999:
-                            logger.info("=====================> Symbol: {}, {} mins, +10%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice))                                
+                            msg = "=====================> Symbol: {}, {} mins, +10%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
+                            email_msg = "{}\n{}".format(email_msg, msg)
+                            logger.info(msg)
+            if len(email_msg) > 0:
+                mailer.send_email(email_msg)
 
 
     def sleepInSeconds(self, logger, delayInSeconds):
@@ -179,21 +189,21 @@ try:
     round = 1
     logger = m.prepare_logger()
     mailer = Mailer()
-    mailer.send_email("test")
     while True:
         try:
             logger.info("\nRound: {}, -----------------".format(round))
             round += 1
             past24Hours = m.past_24_hours()
             history_data.append(past24Hours)
-            m.handle_business(business5Min, past24Hours, history_data)
-            m.handle_business(business10Min, past24Hours, history_data)
-            m.handle_business(business25Min, past24Hours, history_data)
+            m.handle_business(business5Min, past24Hours, history_data, mailer)
+            m.handle_business(business10Min, past24Hours, history_data, mailer)
+            m.handle_business(business25Min, past24Hours, history_data, mailer)
             if len(history_data) > 100:
                 history_data = history_data[1:]
             m.sleepInSeconds(logger, delayInSeconds)
         except Exception as e:
             logger.info('Exception in round {}: {}'.format(round, e))
+
 
 except Exception as e:
     logger.info('Exception: %s' % e)
