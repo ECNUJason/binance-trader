@@ -17,6 +17,7 @@ from decimal import Decimal
 import logging
 import os.path
 import os,sys
+from Mailer import Mailer
 
 class Binance:
 
@@ -177,6 +178,8 @@ try:
     m = Binance()
     round = 1
     logger = m.prepare_logger()
+    mailer = Mailer()
+    mailer.send_email("test")
     while True:
         try:
             logger.info("\nRound: {}, -----------------".format(round))
