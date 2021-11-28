@@ -18,6 +18,7 @@ import logging
 import os.path
 import os,sys
 from Mailer import Mailer
+import traceback
 
 class Binance:
 
@@ -224,6 +225,7 @@ try:
             m.sleepInSeconds(logger, delayInSeconds)
         except Exception as e:
             logger.info('Exception in round {}: {}'.format(round, e))
+            traceback.print_exc()
 
 
 except Exception as e:
