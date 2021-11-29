@@ -220,6 +220,7 @@ class Binance:
             info['mac-address']=':'.join(re.findall('..', '%012x' % uuid.getnode()))
             info['processor']=platform.processor()
             info['ram']=str(round(psutil.virtual_memory().total / (1024.0 **3)))+" GB"
+            info['pid']=os.getpid()
             return json.dumps(info)
         except Exception as e:
             logger.exception(e)
