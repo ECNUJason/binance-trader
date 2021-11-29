@@ -127,7 +127,7 @@ class Binance:
         csv_file_path = "data/{}".format(csv_file_name)
         with open(csv_file_path, 'wb') as csv_file:
             np.savetxt(csv_file, np_array, delimiter=",", fmt='%s', header='symbol,price')
-        logger.info("Write 24 hours data to csv file:{}".format(csv_file_path))
+        # logger.info("Write 24 hours data to csv file:{}".format(csv_file_path))
         return dict_data
     
     def prepare_logger(self):
