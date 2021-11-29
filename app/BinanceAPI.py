@@ -136,7 +136,6 @@ class BinanceAPI:
 
     def _get_without_param(self, path):
         url = path
-        print("Request: url:{}.".format(url))
         header = {"X-MBX-APIKEY": self.key}
         return requests.get(url, headers=header, \
             timeout=30, verify=True).json()

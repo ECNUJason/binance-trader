@@ -109,7 +109,7 @@ class Binance:
         error_msg = "Way too much request weight used"
         if error_msg in response_string:
             logger.warning(error_msg)
-            mailer.send_email(error_msg)
+            mailer.send_email(error_msg, logger)
             raise Exception("throtting triggered.")
         for coin in response:
             symbol = coin['symbol']
@@ -169,7 +169,7 @@ class Binance:
                     oldPrice = history_data[len(history_data) - businessInMin - 1][symbol]
                     if oldPrice != 0:
                         ratio = ((currentPrice - oldPrice)/oldPrice) # To avoid ratio become 0
-                        ratio = float(ratio)
+                        ratio = round(ratio, 5)
                         if ratio > 0.1999:
                             msg = "=====================> Symbol: {}, {} mins, +20%, ratio:{}, currentPrice:{}, oldPrice:{}".format(symbol, businessInMin, ratio, currentPrice, oldPrice)
                             email_msg = "{}\n{}".format(email_msg, msg)
@@ -219,7 +219,7 @@ class Binance:
             info['ip-address']=socket.gethostbyname(socket.gethostname())
             info['mac-address']=':'.join(re.findall('..', '%012x' % uuid.getnode()))
             info['processor']=platform.processor()
-            info['ram']=str(float(psutil.virtual_memory().total / (1024.0 **3)))+" GB"
+            info['ram']=str(round(psutil.virtual_memory().total / (1024.0 **3)))+" GB"
             return json.dumps(info)
         except Exception as e:
             logger.exception(e)
@@ -234,13 +234,15 @@ try:
     business25Min = 25
     history_data = []
     m = Binance()
-    round = 1
+    roundIdx = 0
     logger = m.prepare_logger()
     mailer = Mailer()
     while True:
         try:
-            logger.info("\nRound: {}, -----------------".format(round))
-            round += 1
+            if roundIdx % 60 == 0:
+                mailer.send_email("hourly heart beat from machine:\n{}".format(m.getSystemInfo(logger)), logger, "Liveness Pulse")
+            logger.info("Round: {}, -----------------".format(roundIdx))
+            roundIdx += 1
             past24Hours = m.past_24_hours(logger, mailer)
             history_data.append(past24Hours)
             email_msg = ""
@@ -250,18 +252,20 @@ try:
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business25Min, past24Hours, history_data, mailer))
             if len(email_msg) > 0:
                 email_msg = "Time:{} \n {}".format(datetime.now().strftime("%Y%m%d_%H%M%S"), email_msg)
-                mailer.send_email(email_msg)
+                mailer.send_email(email_msg, logger)
             if len(history_data) > 100:
                 history_data = history_data[1:]
             m.sleepInSeconds(logger, delayInSeconds)
         except Exception as e:
-            logger.info('Exception in round {}: {}'.format(round, e))
+            error_msg = 'Exception in roundIdx {}: {}'.format(roundIdx, e)
+            logger.error(error_msg)
             traceback.print_exc()
-            history_data.append(history_data[-1]) # use data in last min
+            if len(history_data) > 1:
+                history_data.append(history_data[-1]) # use data in last min
+            error_msg = "{}\n From machine:\n{}".format(error_msg, m.getSystemInfo(logger))
+            mailer.send_email(error_msg, logger, "Error in round:{}".format(roundIdx))
             m.sleepInSeconds(logger, delayInSeconds)
-        if (round+1)%60 == 0:
-            mailer.send_email("hourly heart beat from machone:\n{}".format(m.getSystemInfo(logger)), "Liveness Pulse")
-
 
 except Exception as e:
     logger.info('Exception: %s' % e)
+    traceback.print_exc()

@@ -10,7 +10,7 @@ class Mailer:
     def __init__(self):
         pass
     
-    def send_email(self, message, subject = "Trader Business"):
+    def send_email(self, message, logger, subject = "Trader Business"):
         #sender是邮件发送人邮箱，passWord是服务器授权码，mail_host是服务器地址（这里是QQsmtp服务器）
         sender = 'fake@qq.com'#
         passWord = 'fake'
@@ -53,13 +53,13 @@ class Mailer:
                 try:
                     msg['To'] = to = item
                     s.sendmail(sender,to,msg.as_string())
-                    print('Success to send to email:{}'.format(item))
+                    logger.info('Success to send to:{}'.format(item))
                     break
                 except Exception as e:
-                    print("Falied to send to email:{}, error:{}".format(item, e))
+                    logger.warning("Falied to send to:{}, error:{}".format(item, e))
             s.quit()
         except smtplib.SMTPException as e:
-            print("Falied, %s",e)
+            logger.error("Falied, %s",e)
 
 if __name__ == "__main__":
     mailer = Mailer()
