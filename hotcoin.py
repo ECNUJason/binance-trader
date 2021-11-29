@@ -233,6 +233,7 @@ try:
     business5Min = 5
     business10Min = 10
     business25Min = 25
+    business60Min = 60
     history_data = []
     m = Binance()
     roundIdx = 0
@@ -251,6 +252,7 @@ try:
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business5Min, past24Hours, history_data, mailer))
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business10Min, past24Hours, history_data, mailer))
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business25Min, past24Hours, history_data, mailer))
+            email_msg = m.concat_email_msg(email_msg, m.handle_business(business60Min, past24Hours, history_data, mailer))
             if len(email_msg) > 0:
                 email_msg = "Time:{} \n {}".format(datetime.now().strftime("%Y%m%d_%H%M%S"), email_msg)
                 mailer.send_email(email_msg, logger)
