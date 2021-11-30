@@ -226,6 +226,10 @@ class Binance:
             logger.exception(e)
             raise e
 
+    def liveness_pulse(self, roundIdx, mailer, logger):
+        if roundIdx % 60 == 0:
+            mailer.send_email("hourly heart beat from machine:\n{}".format(self.getSystemInfo(logger)), logger, "Liveness Pulse")
+
 
 try:
     delayInSeconds = 60
@@ -241,8 +245,7 @@ try:
     mailer = Mailer()
     while True:
         try:
-            if roundIdx % 60 == 0:
-                mailer.send_email("hourly heart beat from machine:\n{}".format(m.getSystemInfo(logger)), logger, "Liveness Pulse")
+            m.liveness_pulse(roundIdx, mailer, logger)
             logger.info("Round: {}, -----------------".format(roundIdx))
             roundIdx += 1
             past24Hours = m.past_24_hours(logger, mailer)
@@ -254,7 +257,8 @@ try:
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business25Min, past24Hours, history_data, mailer))
             email_msg = m.concat_email_msg(email_msg, m.handle_business(business60Min, past24Hours, history_data, mailer))
             if len(email_msg) > 0:
-                email_msg = "Time:{} \n {}".format(datetime.now().strftime("%Y%m%d_%H%M%S"), email_msg)
+                email_msg = "{}.\n System Info:{}".format(email_msg, m.getSystemInfo(logger))
+                email_msg = "Time:{} \n {}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), email_msg)
                 mailer.send_email(email_msg, logger)
             if len(history_data) > 100:
                 history_data = history_data[1:]
